@@ -1,1 +1,1 @@
-1 ERRO: Editar - não aparecendo após o cadastro, colocar 
+1 ERRO: Editar - não aparecendo após o cadastro, colocar "<a href="index.php?editar=<?php echo $usuario['id']; ?>">Editar</a>"
