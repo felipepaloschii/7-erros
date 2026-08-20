@@ -18,7 +18,7 @@ if (isset($_POST['cadastrar'])) {
     $sql = "INSERT INTO usuarios (nome, email) VALUES (?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $nome, $email);
-    $stmt-> execute();
+    $stmt->execute();
 
     header("Location: index.php");
     exit();
@@ -37,43 +37,70 @@ if (isset($_GET['excluir'])) {
     exit();
 }
 
-// EDITAR
+// SALVAR EDIÇÃO (POST)
 if (isset($_POST['editar'])) {
-    $id = $_POST['id'];
+    $id = (int) $_POST['id'];
     $nome = $_POST['nome'];
     $email = $_POST['email'];
 
     $sql = "UPDATE usuarios SET nome = ?, email = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iss", $nome, $email, $id);
+    $stmt->bind_param("ssi", $nome, $email, $id);
     $stmt->execute();
 
     header("Location: index.php");
     exit();
 }
 
-// BUSCAR USUARIOS
+$usuario_editar = null;
+if (isset($_GET['editar'])) {
+    $id = (int) $_GET['editar'];
+
+    $sql = "SELECT id, nome, email FROM usuarios WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $usuario_editar = $stmt->get_result()->fetch_assoc();
+}
+
+// BUSCAR USUÁRIOS
 $sql = "SELECT id, nome, email FROM usuarios ORDER BY id DESC";
 $resultado = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>CRUD de Usuários</title>
 </head>
+
 <body>
 
-    <h2>Cadastro de Usuários</h2>
+    <h2><?php echo $usuario_editar ? 'Editar Usuário' : 'Cadastro de Usuários'; ?></h2>
     <form method="POST">
+        <?php if ($usuario_editar): ?>
+            <input type="hidden" name="id" value="<?php echo $usuario_editar['id']; ?>">
+        <?php endif; ?>
+
         <label>Nome:</label>
-        <input type="text" name="nome" required>
+        <input type="text" name="nome"
+            value="<?php echo ($usuario_editar['nome'] ?? ''); ?>" required>
         <br><br>
+
         <label>Email:</label>
-        <input type="email" name="email" required>
+        <input type="email" name="email"
+            value="<?php echo ($usuario_editar['email'] ?? ''); ?>" required>
         <br><br>
-        <button type="submit" name="cadastrar">Cadastrar</button>
+
+        <button type="submit" name="<?php echo $usuario_editar ? 'editar' : 'cadastrar'; ?>">
+            <?php echo $usuario_editar ? 'Salvar Alterações' : 'Cadastrar'; ?>
+        </button>
+
+        <?php if ($usuario_editar): ?>
+            <a href="index.php">Cancelar</a>
+        <?php endif; ?>
     </form>
 
     <h2>Usuários Cadastrados</h2>
@@ -86,17 +113,18 @@ $resultado = $conn->query($sql);
         </tr>
 
         <?php while ($usuario = $resultado->fetch_assoc()) { ?>
-        <tr>
-            <td><?php echo $usuario['id']; ?></td>
-            <td><?php echo $usuario['nome']; ?></td>
-            <td><?php echo $usuario['email']; ?></td>
-            <td>
-                <a href="index.php?editar=<?php echo $usuario['id']; ?>">Editar</a> |
-                <a href="index.php?excluir=<?php echo $usuario['id']; ?>">Excluir</a>
-            </td>
-        </tr>
-        <?php } ?> 
+            <tr>
+                <td><?php echo $usuario['id']; ?></td>
+                <td><?php echo ($usuario['nome']); ?></td>
+                <td><?php echo ($usuario['email']); ?></td>
+                <td>
+                    <a href="index.php?editar=<?php echo $usuario['id']; ?>">Editar</a> |
+                    <a href="index.php?excluir=<?php echo $usuario['id']; ?>">Excluir</a>
+                </td>
+            </tr>
+        <?php } ?>
     </table>
 
 </body>
+
 </html>
